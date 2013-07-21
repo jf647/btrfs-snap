@@ -14,8 +14,8 @@ prog=${0##*/}
 
 USAGE="Usage: ${prog} -h for usage help
        ${prog} -V for version
-       ${prog} <mountpoint> <prefix> <count>"
-SYNOPSIS="${prog} <mountpoint> <prefix> <count>
+       ${prog} [options] <mountpoint> <prefix> <count>"
+SYNOPSIS="${prog} [options] <mountpoint> <prefix> <count>
 <mountpoint> is the mountpoint of the btrfs file system to make a
              snapshot of
 <prefix>     is the prefix to be used in the name of the snapshot.
@@ -29,8 +29,10 @@ HH:MM:SS. This format makes shure snapshot names sort correctly in
 cronological order even when sorted alphabetically. The 24 newest
 snapshots matching the prefix are kept around. The rest are deleted.
 
-Snapshots are always created in a directory called .snapshot at the
-top level of the given mount point.
+if '-r' is given, snapshots are created read only
+
+if '-b dir' is given, snapshots are created rooted in dir, with a directory
+structure that mimics the source.
 
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
@@ -52,18 +54,19 @@ ${0} /home daily 7
 #!/bin/bash
 ${0} /home weekly 4"
 
-inout="out"
-while getopts "hVio" arg; do
+base=""
+readonly=""
+while getopts "hVrb:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
 			exit 0
 			;;
-		i )
-			inout="in"
+		r )
+			readonly="-r"
 			;;
-		o )
-			inout="out"
+		b )
+			base=shift
 			;;
 		V )
 			echo "${prog} Version ${VERSION}"
@@ -75,7 +78,6 @@ while getopts "hVio" arg; do
 			;;
 	esac
 done
-
 
 if [ $# -ne 3 ] ; then
 	echo "$USAGE"
@@ -96,30 +98,25 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-if [ "$inout" == "in" ]
+if [ "x$base" == "x" ]
 then
-    ssbase="${mp}/.snapshot"
-elif [ "$inout" == "out" ]
-    ssbase="${outside_base}/${mp}"
-then
-else
-    echo "Error: unknown in/out mode '$inout'"
+    base="${mp}/.snapshot"
 fi
 
-if [ ! -d $ssbase ]; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $ssbase"
-	mkdir -p $ssbase
+if [ ! -d $base ]; then
+	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
+	mkdir -p $base
 fi
 
 dt=`date +'%Y-%m-%d_%H:%M:%S'`
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} $ssbase/${pf}_${dt} 2>&1`
+out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} $base/${pf}_${dt} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
-ls -dr $ssbase/${pf}_* | tail -n +${cnt} | while read snap ; do
+ls -dr $basey/${pf}_* | tail -n +${cnt} | while read snap ; do
 	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
