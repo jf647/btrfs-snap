@@ -66,7 +66,7 @@ while getopts "hVrb:" arg; do
 			readonly="-r"
 			;;
 		b )
-			base=shift
+			base=$OPTARG
 			;;
 		V )
 			echo "${prog} Version ${VERSION}"
@@ -79,13 +79,11 @@ while getopts "hVrb:" arg; do
 	esac
 done
 
+shift $((OPTIND-1))
+
 if [ $# -ne 3 ] ; then
 	echo "$USAGE"
 	exit 1
-fi
-
-if [ -f /etc/default/btrfs-snap ] ; then
-	. /etc/default/btrfs-snap
 fi
 
 mp=$1
@@ -101,7 +99,10 @@ fi
 if [ "x$base" == "x" ]
 then
     base="${mp}/.snapshot"
+else
+    base="${base}/$mp"
 fi
+base=$(readlink -f $base)
 
 if [ ! -d $base ]; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
@@ -116,7 +117,7 @@ else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
-ls -dr $basey/${pf}_* | tail -n +${cnt} | while read snap ; do
+ls -dr $base/${pf}_* | tail -n +${cnt} | while read snap ; do
 	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
