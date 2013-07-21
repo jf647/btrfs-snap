@@ -100,17 +100,16 @@ if [ "x$base" == "x" ]
 then
     base="${mp}/.snapshot"
 else
-    base="${base}/$mp"
+    base="${base}/${mp}"
 fi
-base=$(readlink -f $base)
-
 if [ ! -d $base ]; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
 	mkdir -p $base
 fi
+base=$(readlink -f $base)
 
 dt=`date +'%Y-%m-%d_%H:%M:%S'`
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} $base/${pf}_${dt} 2>&1`
+out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${pf}_${dt} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
