@@ -80,8 +80,8 @@ if [ $# -ne 3 ] ; then
 	exit 1
 fi
 
-if [ -f /etc/sysconfig/btrfs-snap ] ; then
-	. /etc/sysconfig/btrfs-snap
+if [ -f /etc/default/btrfs-snap ] ; then
+	. /etc/default/btrfs-snap
 fi
 
 mp=$1
@@ -100,7 +100,7 @@ if [ ! -d "${mp}/.snapshot" ]; then
 fi
 
 dt=`date +'%Y-%m-%d_%H:%M:%S'`
-out=`/sbin/btrfs subvol snapshot ${mp} ${mp}/.snapshot/${pf}_${dt} 2>&1`
+out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${mp}/.snapshot/${pf}_${dt} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
