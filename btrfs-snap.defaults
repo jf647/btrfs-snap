@@ -1,1 +1,2 @@
 readonly="-r"
+outside_base="/snapshot"

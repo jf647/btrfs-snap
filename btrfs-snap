@@ -50,18 +50,20 @@ ${0} /home daily 7
 /etc/cron.weekly/btrfs-snap
 
 #!/bin/bash
-${0} /home weekly 4
+${0} /home weekly 4"
 
-Remember that at the moment snapshots cannot be made read-only, but you
-should not modify the snapshots created by this script, as they will
-get deleted without any notice. To restore a file, just copy it back from
-a snapshot to the main branch."
-
-while getopts "hV" arg; do
+inout="out"
+while getopts "hVio" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
 			exit 0
+			;;
+		i )
+			inout="in"
+			;;
+		o )
+			inout="out"
 			;;
 		V )
 			echo "${prog} Version ${VERSION}"
@@ -94,20 +96,30 @@ if [ $? -ne 0 ] ; then
 	exit 1
 fi
 
-if [ ! -d "${mp}/.snapshot" ]; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating ${mp}/.snapshot"
-	mkdir "${mp}/.snapshot"
+if [ "$inout" == "in" ]
+then
+    ssbase="${mp}/.snapshot"
+elif [ "$inout" == "out" ]
+    ssbase="${outside_base}/${mp}"
+then
+else
+    echo "Error: unknown in/out mode '$inout'"
+fi
+
+if [ ! -d $ssbase ]; then
+	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $ssbase"
+	mkdir -p $ssbase
 fi
 
 dt=`date +'%Y-%m-%d_%H:%M:%S'`
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${mp}/.snapshot/${pf}_${dt} 2>&1`
+out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} $ssbase/${pf}_${dt} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
-ls -dr ${mp}/.snapshot/${pf}_* | tail -n +${cnt} | while read snap ; do
+ls -dr $ssbase/${pf}_* | tail -n +${cnt} | while read snap ; do
 	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
@@ -115,4 +127,3 @@ else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 done
-
