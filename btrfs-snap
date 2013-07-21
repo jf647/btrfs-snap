@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+# btrfs-snap - make periodic snapshots of btrfs filesystem
+#
+# Copyright (C) 2010 Birger Monsen birger@birger.sh
+#
+# This program is distributed under the GNU General Public License
+# http://www.gnu.org/licenses/gpl.txt
+#
+
+LOG_FACILITY=local0
+VERSION="1.0"
+prog=${0##*/}
+
+USAGE="Usage: ${prog} -h for usage help
+       ${prog} -V for version
+       ${prog} <mountpoint> <prefix> <count>"
+SYNOPSIS="${prog} <mountpoint> <prefix> <count>
+<mountpoint> is the mountpoint of the btrfs file system to make a
+             snapshot of
+<prefix>     is the prefix to be used in the name of the snapshot.
+             E.g. hourly, daily, weekly...
+<count>      The number of snapshots with the given prefix to keep.
+
+btrfs-snap / hourly 24
+would make a snapshot in /.snapshot called hourly_<date>_<time>
+where <date> is on the form YYYY-MM-DD and <time> is on the form
+HH:MM:SS. This format makes shure snapshot names sort correctly in
+cronological order even when sorted alphabetically. The 24 newest
+snapshots matching the prefix are kept around. The rest are deleted.
+
+Snapshots are always created in a directory called .snapshot at the
+top level of the given mount point.
+
+Example usage for a system with 2 btrfs file systems mounted as
+/ and /home (remember to make these scripts executable):
+
+/etc/cron.hourly/btrfs-snap
+
+#!/bin/bash
+${0} / hourly 24
+${0} /home hourly 24
+
+/etc/cron.daily/btrfs-snap
+
+#!/bin/bash
+${0} / daily 7
+${0} /home daily 7
+
+/etc/cron.weekly/btrfs-snap
+
+#!/bin/bash
+${0} /home weekly 4
+
+Remember that at the moment snapshots cannot be made read-only, but you
+should not modify the snapshots created by this script, as they will
+get deleted without any notice. To restore a file, just copy it back from
+a snapshot to the main branch."
+
+while getopts "hV" arg; do
+	case "${arg}" in
+		h )
+			echo "$SYNOPSIS"
+			exit 0
+			;;
+		V )
+			echo "${prog} Version ${VERSION}"
+			exit 0
+			;;
+		* )
+			echo "$USAGE"
+			exit 1
+			;;
+	esac
+done
+
+
+if [ $# -ne 3 ] ; then
+	echo "$USAGE"
+	exit 1
+fi
+
+if [ -f /etc/sysconfig/btrfs-snap ] ; then
+	. /etc/sysconfig/btrfs-snap
+fi
+
+mp=$1
+pf=$2
+cnt=$(( $3+1 ))
+
+mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
+if [ $? -ne 0 ] ; then
+	echo "Error: ${mp} is not a btrfs mountpoint"
+	exit 1
+fi
+
+if [ ! -d "${mp}/.snapshot" ]; then
+	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating ${mp}/.snapshot"
+	mkdir "${mp}/.snapshot"
+fi
+
+dt=`date +'%Y-%m-%d_%H:%M:%S'`
+out=`/sbin/btrfs subvol snapshot ${mp} ${mp}/.snapshot/${pf}_${dt} 2>&1`
+if [ $? -eq 0 ] ; then
+	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+else
+	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+fi
+
+ls -dr ${mp}/.snapshot/${pf}_* | tail -n +${cnt} | while read snap ; do
+	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
+if [ $? -eq 0 ] ; then
+	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+else
+	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+fi
+done
+
