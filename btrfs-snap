@@ -3,6 +3,7 @@
 # btrfs-snap - make periodic snapshots of btrfs filesystem
 #
 # Copyright (C) 2010 Birger Monsen birger@birger.sh
+# Copyright (C) 2013 James FitzGibbon james@nadt.net
 #
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
