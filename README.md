@@ -16,14 +16,11 @@ Usage
 
 btrfs-snap [-r] [-b basedir] mountpoint prefix count
 
-mountpoint is the filesystem to snapshot (must be found in the output of 'mount -t btrfs')
-prefix is the prefix, which usually corresponds to a schedule (e.g. 1m, 5m, 3h, 1d, 1w, 3mo)
-count is the number of snapshots with the same prefix to keep
-
--r makes the snapshot readonly (requires btrfs-tools v0.20)
--b basedir places the snapshot in a like-named directory rooted in the basedir
-
-Without -b, snapshots are placed in a directory called .snapshot in the filesystem
+* mountpoint is the filesystem to snapshot (must be found in the output of 'mount -t btrfs')
+* prefix is the prefix, which usually corresponds to a schedule (e.g. 1m, 5m, 3h, 1d, 1w, 3mo)
+* count is the number of snapshots with the same prefix to keep
+* -r makes the snapshot readonly (requires btrfs-tools v0.20)
+* -b basedir places the snapshot in a like-named directory rooted in the basedir.  Without -b, snapshots are placed in a directory called .snapshot at the top of the mountpoint
 
 Examples
 --------
@@ -59,4 +56,5 @@ Authors
 -------
 
 Originally by Birger Monsen <birger@birger.sh>
+
 Readonly and basedir additions by James FitzGibbon <james@nadt.net>
