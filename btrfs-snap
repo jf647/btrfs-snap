@@ -21,6 +21,8 @@ SYNOPSIS="${prog} [options] <mountpoint> <prefix> <count>
              snapshot of
 <prefix>     is the prefix to be used in the name of the snapshot.
              E.g. hourly, daily, weekly...
+             If prefix=VFS a Samba vfs_shadow_copy snapshot naming convention
+             will be used (@GMT-%Y.%m.%d-%H.%M.%S).
 <count>      The number of snapshots with the given prefix to keep.
 
 btrfs-snap / hourly 24
@@ -87,7 +89,8 @@ if [ $# -ne 3 ] ; then
 	exit 1
 fi
 
-mp=$1
+# Remove trailing slash
+mp=$(echo $1 | sed -e 's#/$##')
 pf=$2
 cnt=$(( $3+1 ))
 
@@ -109,15 +112,22 @@ if [ ! -d $base ]; then
 fi
 base=$(readlink -f $base)
 
-dt=`date +'%Y-%m-%d_%H:%M:%S'`
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${pf}_${dt} 2>&1`
+if [ ${pf} == VFS ]; then
+	nd='-'
+	snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
+	pf='@GMT'
+else
+	nd='_'
+	snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
+fi
+out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
-ls -dr $base/${pf}_* | tail -n +${cnt} | while read snap ; do
+ls -dr $base/${pf}${nd}* | tail -n +${cnt} | while read snap ; do
 	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
