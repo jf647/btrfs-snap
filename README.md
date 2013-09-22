@@ -58,3 +58,5 @@ Authors
 Originally by Birger Monsen <birger@birger.sh>
 
 Readonly and basedir additions by James FitzGibbon <james@nadt.net>
+
+VFS snapshot naming support by gitmopp (https://github.com/gitmopp)
