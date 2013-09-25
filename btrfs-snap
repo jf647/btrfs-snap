@@ -90,7 +90,7 @@ if [ $# -ne 3 ] ; then
 fi
 
 # Remove trailing slash
-mp=$(echo $1 | perl -pe 's#[^/]/#$1#')
+mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
 pf=$2
 cnt=$(( $3+1 ))
 
