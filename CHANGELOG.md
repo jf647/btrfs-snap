@@ -1,5 +1,10 @@
 # btrfs-snap Changelog
 
+## v1.2.2 (Sept 24 2013)
+
+* trailing slash removal failed on multipart paths due to missing line
+  terminator.  Time for a bats test suite.
+
 ## v1.2.1 (Sept 24 2013)
 
 * fix trailing slash removal so that it works when the mountpoint is '/'. 
