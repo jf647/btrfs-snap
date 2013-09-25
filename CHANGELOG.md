@@ -1,5 +1,11 @@
 # btrfs-snap Changelog
 
+## v1.2.1 (Sept 24 2013)
+
+* fix trailing slash removal so that it works when the mountpoint is '/'. 
+  This required a change to perl from sed (standard sed doesn't have negated
+  character classes)
+
 ## v1.2.0 (Sept 21 2013)
 
 * added VFS snapshot naming support courtesy of gitmopp
