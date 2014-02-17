@@ -94,10 +94,15 @@ mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
 pf=$2
 cnt=$(( $3+1 ))
 
+# Verify that the path is either a valid btrfs mountpoint
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
-	echo "Error: ${mp} is not a btrfs mountpoint"
-	exit 1
+        # or a valid snapshot with the same ending as ${mp}
+        btrfs subvolume list ${mp} | grep "${mp##*/}$" > /dev/null
+        if [ $? -ne 0 ] ; then
+                echo "Error: ${mp} is not a btrfs mountpoint"
+                exit 1
+        fi
 fi
 
 if [ "x$base" == "x" ]
