@@ -16,11 +16,16 @@ Usage
 
 btrfs-snap [-r] [-b basedir] mountpoint prefix count
 
-* mountpoint is the filesystem to snapshot (must be found in the output of 'mount -t btrfs')
+* mountpoint is the filesystem to snapshot
 * prefix is the prefix, which usually corresponds to a schedule (e.g. 1m, 5m, 3h, 1d, 1w, 3mo)
 * count is the number of snapshots with the same prefix to keep
 * -r makes the snapshot readonly (requires btrfs-tools v0.20)
 * -b basedir places the snapshot in a like-named directory rooted in the basedir.  Without -b, snapshots are placed in a directory called .snapshot at the top of the mountpoint
+
+mountpoint must be a mounted btrfs filesystem (i.e. appears in the output of
+"mount -t btrfs") or an unmounted btrfs subvolume (which must exit 0 when
+"btrfs su sh" is called on it).  Unmounted subvolumes require a recent
+version of btrfs-progs; see "OS Support" below for specifics.
 
 Examples
 --------
@@ -43,7 +48,17 @@ Tested on
 * Ubuntu 12.04 with the raring kernel
 * Ubuntu 13.04
 
-Anything else, YMMV.  Reports of successful use on other operating systems is welcome
+Anything else, YMMV.  Reports of successful use on other operating systems
+is welcome
+
+To snaphshot an unmounted btrfs subvolume, you need a version of btrfs-progs
+that supports the "btrfs subvolume show" command.
+
+The version that comes with Ubuntu 13.04 is too old; the version that comes
+with Ubuntu 13.10 works.  You should be able to compile a working version
+from the sources (refer to
+https://btrfs.wiki.kernel.org/index.php/Btrfs_source_repositories for
+details).
 
 License
 -------
@@ -60,3 +75,5 @@ Originally by Birger Monsen <birger@birger.sh>
 Readonly and basedir additions by James FitzGibbon <james@nadt.net>
 
 VFS snapshot naming support by gitmopp (https://github.com/gitmopp)
+
+Support for snapshotting unmounted btrfs subvolumes by Brian Kloppenborg (https://github.com/bkloppenborg)
