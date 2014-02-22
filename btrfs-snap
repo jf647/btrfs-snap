@@ -4,13 +4,14 @@
 #
 # Copyright (C) 2010 Birger Monsen birger@birger.sh
 # Copyright (C) 2013 James FitzGibbon james@nadt.net
-#
+# Copyright (C) 2014 Brian Kloppenberg
+
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
 #
 
 LOG_FACILITY=local0
-VERSION="1.1.0"
+VERSION="1.3.0"
 prog=${0##*/}
 
 USAGE="Usage: ${prog} -h for usage help
@@ -94,10 +95,15 @@ mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
 pf=$2
 cnt=$(( $3+1 ))
 
+# Verify that the path is either a valid btrfs mountpoint
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
-	echo "Error: ${mp} is not a btrfs mountpoint"
-	exit 1
+        # or a valid snapshot matching mp
+        btrfs subvolume show $mp | grep "${mp}$" > /dev/null
+        if [ $? -ne 0 ] ; then
+                echo "Error: ${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
+                exit 1
+        fi
 fi
 
 if [ "x$base" == "x" ]
