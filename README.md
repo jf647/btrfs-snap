@@ -38,7 +38,7 @@ Examples
 The above cronjob would
 
 1. create a snapshot of / every 5 minutes, keeping 12 generations in /.snapshot
-1. create a snapshot of / every day, keeping 7 generations in /snapshots/home
+1. create a snapshot of /home every day, keeping 7 generations in /snapshots/home
 
 OS Support
 ----------
