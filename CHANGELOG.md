@@ -1,5 +1,11 @@
 # btrfs-snap Changelog
 
+## v1.3.1 (Jan 05 2015)
+
+* added switch to override default snapshot directory name ".snapshot"
+* cleanup
+
+
 ## v1.2.2 (Sept 24 2013)
 
 * trailing slash removal failed on multipart paths due to missing line
@@ -7,7 +13,7 @@
 
 ## v1.2.1 (Sept 24 2013)
 
-* fix trailing slash removal so that it works when the mountpoint is '/'. 
+* fix trailing slash removal so that it works when the mountpoint is '/'.
   This required a change to perl from sed (standard sed doesn't have negated
   character classes)
 
