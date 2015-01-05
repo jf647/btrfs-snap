@@ -20,7 +20,10 @@ btrfs-snap [-r] [-b basedir] mountpoint prefix count
 * prefix is the prefix, which usually corresponds to a schedule (e.g. 1m, 5m, 3h, 1d, 1w, 3mo)
 * count is the number of snapshots with the same prefix to keep
 * -r makes the snapshot readonly (requires btrfs-tools v0.20)
-* -b basedir places the snapshot in a like-named directory rooted in the basedir.  Without -b, snapshots are placed in a directory called .snapshot at the top of the mountpoint
+* -d dir places the snapshot in dir, relative to the mountpoint
+* -b basedir places the snapshot in basedir with a directory structure that mimics the mountpoint
+
+Without -b or -d, snapshots are placed in a directory called .snapshot at the top of the mountpoint.
 
 mountpoint must be a mounted btrfs filesystem (i.e. appears in the output of
 "mount -t btrfs") or an unmounted btrfs subvolume (which must exit 0 when
@@ -47,6 +50,7 @@ Tested on
 
 * Ubuntu 12.04 with the raring kernel
 * Ubuntu 13.04
+* Debian 8
 
 Anything else, YMMV.  Reports of successful use on other operating systems
 is welcome
