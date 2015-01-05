@@ -61,33 +61,33 @@ ${0} /home weekly 4"
 base=""
 readonly=""
 while getopts "hVrb:" arg; do
-	case "${arg}" in
-		h )
-			echo "$SYNOPSIS"
-			exit 0
-			;;
-		r )
-			readonly="-r"
-			;;
-		b )
-			base=$OPTARG
-			;;
-		V )
-			echo "${prog} Version ${VERSION}"
-			exit 0
-			;;
-		* )
-			echo "$USAGE"
-			exit 1
-			;;
-	esac
+        case "${arg}" in
+                h )
+                        echo "$SYNOPSIS"
+                        exit 0
+                        ;;
+                r )
+                        readonly="-r"
+                        ;;
+                b )
+                        base=$OPTARG
+                        ;;
+                V )
+                        echo "${prog} Version ${VERSION}"
+                        exit 0
+                        ;;
+                * )
+                        echo "$USAGE"
+                        exit 1
+                        ;;
+        esac
 done
 
 shift $((OPTIND-1))
 
 if [ $# -ne 3 ] ; then
-	echo "$USAGE"
-	exit 1
+        echo "$USAGE"
+        exit 1
 fi
 
 # Remove trailing slash
@@ -113,31 +113,31 @@ else
     base="${base}/${mp}"
 fi
 if [ ! -d $base ]; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
-	mkdir -p $base
+        logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
+        mkdir -p $base
 fi
 base=$(readlink -f $base)
 
 if [ ${pf} == VFS ]; then
-	nd='-'
-	snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
-	pf='@GMT'
+        nd='-'
+        snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
+        pf='@GMT'
 else
-	nd='_'
-	snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
+        nd='_'
+        snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
 fi
 out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+        logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
-	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+        logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
 ls -dr $base/${pf}${nd}* | tail -n +${cnt} | while read snap ; do
-	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
+        out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+        logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
-	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+        logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 done
