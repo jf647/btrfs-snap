@@ -5,6 +5,7 @@
 # Copyright (C) 2010 Birger Monsen birger@birger.sh
 # Copyright (C) 2013 James FitzGibbon james@nadt.net
 # Copyright (C) 2014 Brian Kloppenberg
+# Copyright (C) 2015 Lukas Pirl btrfs-snap@lukas-pirl.de
 
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
@@ -35,8 +36,11 @@ snapshots matching the prefix are kept around. The rest are deleted.
 
 if '-r' is given, snapshots are created read only
 
-if '-b dir' is given, snapshots are created rooted in dir, with a directory
-structure that mimics the source.
+if '-d dir' is given, snapshots are created in dir, relative to
+mountpoint (default: '.snapshot', conflicts with -b).
+
+if '-b dir' is given, snapshots are created in dir, with a directory
+structure that mimics the source (conflicts with -d).
 
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
@@ -59,8 +63,9 @@ ${0} /home daily 7
 ${0} /home weekly 4"
 
 base=""
+dir=""
 readonly=""
-while getopts "hVrb:" arg; do
+while getopts "hVrb:d:" arg; do
         case "${arg}" in
                 h )
                         echo "$SYNOPSIS"
@@ -71,6 +76,9 @@ while getopts "hVrb:" arg; do
                         ;;
                 b )
                         base=$OPTARG
+                        ;;
+                d )
+                        dir=$OPTARG
                         ;;
                 V )
                         echo "${prog} Version ${VERSION}"
@@ -106,9 +114,22 @@ if [ $? -ne 0 ] ; then
         fi
 fi
 
+# make sure not -d and -b was given
+if [ "x$dir" != "x" ] && [ "x$base" != "x" ]
+then
+        echo "Error: please use either -b or -d"
+        exit 1
+fi
+
+# set default for dir
+if [ "x$dir" == "x" ]
+then
+        dir=".snapshot"
+fi
+
 if [ "x$base" == "x" ]
 then
-    base="${mp}/.snapshot"
+    base="${mp}/${dir}"
 else
     base="${base}/${mp}"
 fi
