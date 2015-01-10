@@ -20,6 +20,8 @@ btrfs-snap [-r] [-b basedir] mountpoint prefix count
 * prefix is the prefix, which usually corresponds to a schedule (e.g. 1m, 5m, 3h, 1d, 1w, 3mo)
 * count is the number of snapshots with the same prefix to keep
 * -r makes the snapshot readonly (requires btrfs-tools v0.20)
+* -c generates more compatible snapshot names
+     (ie. no colons that confuse SAMBA/Window$ clients)
 * -d dir places the snapshot in dir, relative to the mountpoint
 * -b basedir places the snapshot in basedir with a directory structure that mimics the mountpoint
 
