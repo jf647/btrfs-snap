@@ -1,5 +1,9 @@
 # btrfs-snap Changelog
 
+## v1.3.2 (Jan 10 2015)
+* added switch to generate more compatible snapshot names
+  (no colons in file names: this confuses SAMBA/Windows clients)
+
 ## v1.3.1 (Jan 05 2015)
 
 * added switch to override default snapshot directory name ".snapshot"

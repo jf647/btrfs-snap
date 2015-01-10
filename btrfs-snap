@@ -12,7 +12,7 @@
 #
 
 LOG_FACILITY=local0
-VERSION="1.3.1"
+VERSION="1.3.2"
 prog=${0##*/}
 
 USAGE="Usage: ${prog} -h for usage help
@@ -35,6 +35,9 @@ cronological order even when sorted alphabetically. The 24 newest
 snapshots matching the prefix are kept around. The rest are deleted.
 
 if '-r' is given, snapshots are created read only
+
+if '-c' is given, snapshots are created with more compatible names
+(i.e. no colons in file names, so that SAMBA does not mangle the names)
 
 if '-d dir' is given, snapshots are created in dir, relative to
 mountpoint (default: '.snapshot', conflicts with -b).
@@ -65,7 +68,8 @@ ${0} /home weekly 4"
 base=""
 dir=""
 readonly=""
-while getopts "hVrb:d:" arg; do
+time_delim=":"
+while getopts "hVrb:d:c" arg; do
         case "${arg}" in
                 h )
                         echo "$SYNOPSIS"
@@ -83,6 +87,9 @@ while getopts "hVrb:d:" arg; do
                 V )
                         echo "${prog} Version ${VERSION}"
                         exit 0
+                        ;;
+                c )
+                        time_delim="-"
                         ;;
                 * )
                         echo "$USAGE"
@@ -145,7 +152,7 @@ if [ ${pf} == VFS ]; then
         pf='@GMT'
 else
         nd='_'
-        snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
+        snapname=${pf}${nd}$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
 fi
 out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
