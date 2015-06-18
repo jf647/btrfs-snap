@@ -126,7 +126,7 @@ else
 	nd='_'
 	snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
 fi
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
+out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
@@ -134,7 +134,7 @@ else
 fi
 
 ls -dr $base/${pf}${nd}* | tail -n +${cnt} | while read snap ; do
-	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
+	out=`btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
 else
