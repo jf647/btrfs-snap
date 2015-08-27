@@ -2,6 +2,7 @@
 
 ## v1.3.X-develop (Aug 27 2015)
 * Added checks for existing snapshots and use pattern to search for existing snapshots
+* Added a switch -B to specify the full path snapshot path 
 
 ## v1.3.2 (Jan 10 2015)
 * added switch to generate more compatible snapshot names

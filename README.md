@@ -24,8 +24,9 @@ btrfs-snap [-r] [-b basedir] mountpoint prefix count
      (ie. no colons that confuse SAMBA/Window$ clients)
 * -d dir places the snapshot in dir, relative to the mountpoint
 * -b basedir places the snapshot in basedir with a directory structure that mimics the mountpoint
+* -B basedir places the snapshots in basedir with NO additional subdirectory structure
 
-Without -b or -d, snapshots are placed in a directory called .snapshot at the top of the mountpoint.
+Without -b, -B, or -d, snapshots are placed in a directory called .snapshot at the top of the mountpoint.
 
 mountpoint must be a mounted btrfs filesystem (i.e. appears in the output of
 "mount -t btrfs") or an unmounted btrfs subvolume (which must exit 0 when

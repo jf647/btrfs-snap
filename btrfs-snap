@@ -44,10 +44,14 @@ if '-c' is given, snapshots are created with more compatible names
 (i.e. no colons in file names, so that SAMBA does not mangle the names)
 
 if '-d dir' is given, snapshots are created in dir, relative to
-mountpoint (default: '.snapshot', conflicts with -b).
+mountpoint (default: '.snapshot', conflicts with -b and -B).
 
 if '-b dir' is given, snapshots are created in dir, with a directory
-structure that mimics the source (conflicts with -d).
+structure that mimics the source (conflicts with -d and -B).
+
+if '-B dir' is given, snapshots are created in dir, with NO additional
+subdirectory structure; choose <prefix> wisely to avoid conflicts
+(conflicts with -d and -b).
 
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
@@ -71,9 +75,11 @@ ${0} /home weekly 4"
 
 base=""
 dir=""
+full_base=""
 readonly=""
 time_delim=":"
-while getopts "hVrb:d:c" arg; do
+ONE_OF_b_B_d_GIVEN=false
+while getopts "hVrb:d:B:c" arg; do
         case "${arg}" in
                 h )
                         echo "$SYNOPSIS"
@@ -84,9 +90,18 @@ while getopts "hVrb:d:c" arg; do
                         ;;
                 b )
                         base=$OPTARG
+						if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+						ONE_OF_b_B_d_GIVEN=true
+                        ;;
+				B )
+                        full_base=$OPTARG
+						if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+						ONE_OF_b_B_d_GIVEN=true
                         ;;
                 d )
                         dir=$OPTARG
+						if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+						ONE_OF_b_B_d_GIVEN=true
                         ;;
                 V )
                         echo "${prog} Version ${VERSION}"
@@ -125,13 +140,6 @@ if [ $? -ne 0 ] ; then
         fi
 fi
 
-# make sure not -d and -b was given
-if [ "x$dir" != "x" ] && [ "x$base" != "x" ]
-then
-        echo "Error: please use either -b or -d"
-        exit 1
-fi
-
 # set default for dir
 if [ "x$dir" == "x" ]
 then
@@ -143,6 +151,9 @@ then
     base="${mp}/${dir}"
 else
     base="${base}/${mp}"
+fi
+if [ "x$full_base" != "x" ]; then
+	base=$full_base
 fi
 if [ ! -d $base ]; then
         logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
