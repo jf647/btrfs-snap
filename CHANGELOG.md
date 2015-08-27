@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.3.X-develop (Aug 27 2015)
+* Added checks for existing snapshots and use pattern to search for existing snapshots
+
 ## v1.2.2 (Sept 24 2013)
 
 * trailing slash removal failed on multipart paths due to missing line

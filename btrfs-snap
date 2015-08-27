@@ -1,17 +1,20 @@
 #!/bin/bash
-#
+
 # btrfs-snap - make periodic snapshots of btrfs filesystem
 #
 # Copyright (C) 2010 Birger Monsen birger@birger.sh
 # Copyright (C) 2013 James FitzGibbon james@nadt.net
 # Copyright (C) 2014 Brian Kloppenberg
+# Copyright (C) 2015 Michael Walz btrfs-snap@serpedon.de
 
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
 #
 
+set -u
+
 LOG_FACILITY=local0
-VERSION="1.3.0"
+VERSION="1.3.X-develop"
 prog=${0##*/}
 
 USAGE="Usage: ${prog} -h for usage help
@@ -119,12 +122,15 @@ fi
 base=$(readlink -f $base)
 
 if [ ${pf} == VFS ]; then
-	nd='-'
 	snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
-	pf='@GMT'
+	snappattern="$@GMT-????.??.??-??.??.??"
 else
-	nd='_'
-	snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
+	snapname=${pf}_$(date +%Y-%m-%d_%H:%M:%S)
+	snappattern="${pf}_????-??-??_??:??:??"
+fi
+if [ -e ${base}/${snapname} ]; then
+	logger -p ${LOG_FACILITY}.err -t ${prog} "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
+	exit 2
 fi
 out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
@@ -133,7 +139,7 @@ else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 
-ls -dr $base/${pf}${nd}* | tail -n +${cnt} | while read snap ; do
+ls -dr $base/${snappattern} | tail -n +${cnt} | while read snap ; do
 	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
 	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
@@ -141,3 +147,4 @@ else
 	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
 fi
 done
+
