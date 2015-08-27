@@ -53,6 +53,12 @@ if '-B dir' is given, snapshots are created in dir, with NO additional
 subdirectory structure; choose <prefix> wisely to avoid conflicts
 (conflicts with -d and -b).
 
+if '-t time' is given, a snapshot will only be created if the newest already
+existing snapshot is older than 'time' seconds. Additonally, no snapshot will
+be made if <mountpoint> has identical timestamp as the newest snapshot.
+(The modification timestamps of the subvolumes/folders are used for comparison
+ which MIGHT NOT work in some scenarios.)
+
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
 
@@ -79,7 +85,8 @@ full_base=""
 readonly=""
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
-while getopts "hVrb:d:B:c" arg; do
+time_duration=0
+while getopts "hVrb:d:B:ct:" arg; do
         case "${arg}" in
                 h )
                         echo "$SYNOPSIS"
@@ -88,6 +95,9 @@ while getopts "hVrb:d:B:c" arg; do
                 r )
                         readonly="-r"
                         ;;
+				t )
+						time_duration=$((0+$OPTARG))
+						;;
                 b )
                         base=$OPTARG
 						if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
@@ -172,6 +182,25 @@ if [ -e ${base}/${snapname} ]; then
 	logger -p ${LOG_FACILITY}.err -t ${prog} "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
 	exit 2
 fi
+
+if [ $time_duration -gt 0 ]; then
+	newestSnapshot=`ls -dr $base/${snappattern}| head -n 1`
+	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
+		mp_time=`stat -c "%Y" "${mp}"`
+		snap_time=`stat -c "%Y" "${newestSnapshot}"`
+		cur_time=`date +%s`
+		if [ $snap_time == $mp_time ]; then
+			logger -p ${LOG_FACILITY}.info -t ${prog} "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
+			exit 0;
+		fi
+
+		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
+			logger -p ${LOG_FACILITY}.info -t ${prog} "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
+			exit 0;
+		fi
+	fi
+fi
+
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
         logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
