@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.3.X-develop (Aug 27 2015)
+* Added checks for existing snapshots and use pattern to search for existing snapshots
+
 ## v1.3.2 (Jan 10 2015)
 * added switch to generate more compatible snapshot names
   (no colons in file names: this confuses SAMBA/Windows clients)
@@ -8,7 +11,6 @@
 
 * added switch to override default snapshot directory name ".snapshot"
 * cleanup
-
 
 ## v1.2.2 (Sept 24 2013)
 
