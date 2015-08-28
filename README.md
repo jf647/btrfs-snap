@@ -85,3 +85,9 @@ Readonly and basedir additions by James FitzGibbon <james@nadt.net>
 VFS snapshot naming support by gitmopp (https://github.com/gitmopp)
 
 Support for snapshotting unmounted btrfs subvolumes by Brian Kloppenborg (https://github.com/bkloppenborg)
+
+Switches -c (for windows-combitible timestamps) and -d (for specifying the snapshot directory) by Lukas Pirl (btrfs-snap@lukas-pirl.de)
+
+Switches -B (absolute path of snapshot directory) and -t (time-dependent snapshot) by Michael Walz (btrfs-snap@serpedon.de)
+
+
