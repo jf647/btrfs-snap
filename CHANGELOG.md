@@ -1,9 +1,10 @@
 # btrfs-snap Changelog
 
-## v1.3.X-develop (Aug 27 2015)
+## v1.3.X-develop (Aug 27/28 2015)
 * Added checks for existing snapshots and use pattern to search for existing snapshots
 * Added a switch -B to specify the full path snapshot path
 * Added a switch -t time to create only a snapshot if the newest already existing snapshot is older than 'time' seconds.
+* Added PATH since script is most likely called by crontab with reduced PATH-settings
 
 ## v1.3.2 (Jan 10 2015)
 * added switch to generate more compatible snapshot names

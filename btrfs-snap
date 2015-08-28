@@ -17,7 +17,7 @@ set -u
 LOG_FACILITY=local0
 VERSION="1.3.X-develop"
 prog=${0##*/}
-PATH="$PATH:/sbin"
+PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
 USAGE="Usage: ${prog} -h for usage help
        ${prog} -V for version
