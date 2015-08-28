@@ -195,7 +195,7 @@ if [ -e ${base}/${snapname} ]; then
 fi
 
 if [ $time_duration -gt 0 ]; then
-	newestSnapshot=`ls -dr $base/${snappattern}| head -n 1`
+	newestSnapshot=`ls -dr $base/${snappattern} 2>/dev/null| head -n 1`
 	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
 		mp_time=`stat -c "%Y" "${mp}"`
 		snap_time=`stat -c "%Y" "${newestSnapshot}"`
