@@ -1,18 +1,23 @@
 #!/bin/bash
-#
+
 # btrfs-snap - make periodic snapshots of btrfs filesystem
 #
 # Copyright (C) 2010 Birger Monsen birger@birger.sh
 # Copyright (C) 2013 James FitzGibbon james@nadt.net
 # Copyright (C) 2014 Brian Kloppenberg
+# Copyright (C) 2015 Lukas Pirl btrfs-snap@lukas-pirl.de
+# Copyright (C) 2015 Michael Walz btrfs-snap@serpedon.de
 
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
 #
 
+set -u
+
 LOG_FACILITY=local0
-VERSION="1.3.0"
+VERSION="1.4.0"
 prog=${0##*/}
+PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
 USAGE="Usage: ${prog} -h for usage help
        ${prog} -V for version
@@ -35,8 +40,24 @@ snapshots matching the prefix are kept around. The rest are deleted.
 
 if '-r' is given, snapshots are created read only
 
-if '-b dir' is given, snapshots are created rooted in dir, with a directory
-structure that mimics the source.
+if '-c' is given, snapshots are created with more compatible names
+(i.e. no colons in file names, so that SAMBA does not mangle the names)
+
+if '-d dir' is given, snapshots are created in dir, relative to
+mountpoint (default: '.snapshot', conflicts with -b and -B).
+
+if '-b dir' is given, snapshots are created in dir, with a directory
+structure that mimics the source (conflicts with -d and -B).
+
+if '-B dir' is given, snapshots are created in dir, with NO additional
+subdirectory structure; choose <prefix> wisely to avoid conflicts
+(conflicts with -d and -b).
+
+if '-t time' is given, a snapshot will only be created if the newest already
+existing snapshot is older than 'time' seconds. Additonally, no snapshot will
+be made if <mountpoint> has identical timestamp as the newest snapshot.
+(The modification timestamps of the subvolumes/folders are used for comparison
+ which MIGHT NOT work in some scenarios.)
 
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
@@ -56,11 +77,25 @@ ${0} /home daily 7
 /etc/cron.weekly/btrfs-snap
 
 #!/bin/bash
-${0} /home weekly 4"
+${0} /home weekly 4
+
+
+Alternative (more complicated) example for a system with 1 btrfs subvolume called /data.
+These three commands should be run regularily (e.g. all 5 minutes) and
+test themselves if a snapshot is needed:
+${0} -r -c -B <SNAPSHOT_PATH> -t   3600 /data data_hourly 24
+${0} -r -c -B <SNAPSHOT_PATH> -t  86400 /data data_daily 7
+${0} -r -c -B <SNAPSHOT_PATH> -t 604800 /data data_weekly 4
+"
 
 base=""
+dir=""
+full_base=""
 readonly=""
-while getopts "hVrb:" arg; do
+time_delim=":"
+ONE_OF_b_B_d_GIVEN=false
+time_duration=0
+while getopts "hVrb:d:B:ct:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
@@ -69,12 +104,30 @@ while getopts "hVrb:" arg; do
 		r )
 			readonly="-r"
 			;;
+		t )
+			time_duration=$((0+$OPTARG))
+			;;
 		b )
 			base=$OPTARG
+			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+			ONE_OF_b_B_d_GIVEN=true
+			;;
+		B )
+			full_base=$OPTARG
+			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+			ONE_OF_b_B_d_GIVEN=true
+			;;
+		d )
+			dir=$OPTARG
+			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+			ONE_OF_b_B_d_GIVEN=true
 			;;
 		V )
 			echo "${prog} Version ${VERSION}"
 			exit 0
+			;;
+		c )
+			time_delim="-"
 			;;
 		* )
 			echo "$USAGE"
@@ -95,49 +148,93 @@ mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
 pf=$2
 cnt=$(( $3+1 ))
 
+function log.info() {
+	logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
+	echo "$1"
+}
+
+function log.error() {
+	logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
+	echo "ERROR: $1"
+	exit 1;
+}
+
 # Verify that the path is either a valid btrfs mountpoint
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
-        # or a valid snapshot matching mp
-        btrfs subvolume show $mp | grep "${mp}$" > /dev/null
-        if [ $? -ne 0 ] ; then
-                echo "Error: ${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
-                exit 1
-        fi
+	# or a valid snapshot matching mp
+	btrfs subvolume show $mp | grep "${mp}$" > /dev/null
+	if [ $? -ne 0 ] ; then
+		log.error "${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
+		exit 1;
+	fi
+fi
+
+# set default for dir
+if [ "x$dir" == "x" ]
+then
+	dir=".snapshot"
 fi
 
 if [ "x$base" == "x" ]
 then
-    base="${mp}/.snapshot"
+    base="${mp}/${dir}"
 else
     base="${base}/${mp}"
 fi
+if [ "x$full_base" != "x" ]; then
+	base=$full_base
+fi
 if [ ! -d $base ]; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
+	log.info "Creating $base"
 	mkdir -p $base
 fi
 base=$(readlink -f $base)
 
 if [ ${pf} == VFS ]; then
-	nd='-'
-	snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
-	pf='@GMT'
+    snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
+	snappattern="$@GMT-????.??.??-??.??.??"
 else
-	nd='_'
-	snapname=${pf}${nd}$(date +%Y-%m-%d_%H:%M:%S)
+	snapname=${pf}_$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
+	snappattern="${pf}_????-??-??_??${time_delim}??${time_delim}??"
 fi
-out=`/sbin/btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
-if [ $? -eq 0 ] ; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
-else
-	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+if [ -e ${base}/${snapname} ]; then
+	log.error "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
+	exit 1;
 fi
 
-ls -dr $base/${pf}${nd}* | tail -n +${cnt} | while read snap ; do
-	out=`/sbin/btrfs subvolume delete ${snap} 2>&1`
-if [ $? -eq 0 ] ; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
-else
-	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+if [ $time_duration -gt 0 ]; then
+	newestSnapshot=`ls -dr $base/${snappattern} 2>/dev/null| head -n 1`
+	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
+		mp_time=`stat -c "%Y" "${mp}"`
+		snap_time=`stat -c "%Y" "${newestSnapshot}"`
+		cur_time=`date +%s`
+		if [ $snap_time == $mp_time ]; then
+			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
+			exit 0;
+		fi
+
+		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
+			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
+			exit 0;
+		fi
+	fi
 fi
+
+out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
+if [ $? -eq 0 ] ; then
+	log.info "${out}"
+else
+	log.error "${out}"
+	exit 1;
+fi
+
+ls -dr $base/${snappattern} | tail -n +${cnt} | while read snap ; do
+	out=`btrfs subvolume delete ${snap} 2>&1`
+	if [ $? -eq 0 ] ; then
+		log.info "${out}"
+	else
+		log.error "${out}"
+	fi
 done
+
