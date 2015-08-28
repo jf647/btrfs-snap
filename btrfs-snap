@@ -139,14 +139,25 @@ mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
 pf=$2
 cnt=$(( $3+1 ))
 
+function log.info() {
+        logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
+		echo "$1"
+}
+
+function log.error() {
+        logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
+		echo "ERROR: $1"
+		exit 1;
+}
+
 # Verify that the path is either a valid btrfs mountpoint
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
         # or a valid snapshot matching mp
         btrfs subvolume show $mp | grep "${mp}$" > /dev/null
         if [ $? -ne 0 ] ; then
-                echo "Error: ${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
-                exit 1
+				log.error "${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
+				exit 1;
         fi
 fi
 
@@ -166,7 +177,7 @@ if [ "x$full_base" != "x" ]; then
 	base=$full_base
 fi
 if [ ! -d $base ]; then
-        logger -p ${LOG_FACILITY}.info -t ${prog} "Creating $base"
+		log.info "Creating $base"
         mkdir -p $base
 fi
 base=$(readlink -f $base)
@@ -179,8 +190,8 @@ else
         snappattern="${pf}_????-??-??_??${time_delim}??${time_delim}??"
 fi
 if [ -e ${base}/${snapname} ]; then
-	logger -p ${LOG_FACILITY}.err -t ${prog} "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
-	exit 2
+	log.error "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
+	exit 1;
 fi
 
 if [ $time_duration -gt 0 ]; then
@@ -190,12 +201,12 @@ if [ $time_duration -gt 0 ]; then
 		snap_time=`stat -c "%Y" "${newestSnapshot}"`
 		cur_time=`date +%s`
 		if [ $snap_time == $mp_time ]; then
-			logger -p ${LOG_FACILITY}.info -t ${prog} "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
+			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
 			exit 0;
 		fi
 
 		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
-			logger -p ${LOG_FACILITY}.info -t ${prog} "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
+			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
 			exit 0;
 		fi
 	fi
@@ -203,17 +214,18 @@ fi
 
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
-        logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+		log.info "${out}"
 else
-        logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+		log.error "${out}"
+		exit 1;
 fi
 
 ls -dr $base/${snappattern} | tail -n +${cnt} | while read snap ; do
 	out=`btrfs subvolume delete ${snap} 2>&1`
 if [ $? -eq 0 ] ; then
-	logger -p ${LOG_FACILITY}.info -t ${prog} "${out}"
+	log.info "${out}"
 else
-	logger -p ${LOG_FACILITY}.err -t ${prog} "${out}"
+	log.error "${out}"
 fi
 done
 
