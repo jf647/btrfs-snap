@@ -77,7 +77,16 @@ ${0} /home daily 7
 /etc/cron.weekly/btrfs-snap
 
 #!/bin/bash
-${0} /home weekly 4"
+${0} /home weekly 4
+
+
+Alternative (more complicated) example for a system with 1 btrfs subvolume called /data.
+These three commands should be run regularily (e.g. all 5 minutes) and
+test themselves if a snapshot is needed:
+${0} -r -c -B <SNAPSHOT_PATH> -t   3600 /data data_hourly 24
+${0} -r -c -B <SNAPSHOT_PATH> -t  86400 /data data_daily 7
+${0} -r -c -B <SNAPSHOT_PATH> -t 604800 /data data_weekly 4
+"
 
 base=""
 dir=""
