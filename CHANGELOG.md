@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.4.1 (Aug 31 2015)
+* Bugfix for switch -t: Force update of source timestamp to prevent outdated timestamps on the folders
+
 ## v1.4.0 (Aug 28 2015)
 * Added checks for existing snapshots and use pattern to search for existing snapshots
 * Added a switch -B to specify the full path snapshot path

@@ -15,7 +15,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.4.0"
+VERSION="1.4.1"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -219,6 +219,8 @@ if [ $time_duration -gt 0 ]; then
 			exit 0;
 		fi
 	fi
+	# Force update of source timestamp to prevent outdated timestamps on the folders
+	touch "${mp}"
 fi
 
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
