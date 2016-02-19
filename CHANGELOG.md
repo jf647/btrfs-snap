@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.4.2 (Feb 19 2016)
+* Bugfix for prefix VFS: Removed an unneccessary $-sign which broke the code. (Thanks to 'clawes' for reporting.)
+
 ## v1.4.1 (Aug 31 2015)
 * Bugfix for switch -t: Force update of source timestamp to prevent outdated timestamps on the folders
 
