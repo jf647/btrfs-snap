@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.5.0 (Mar 09 2016)
+* Added new flag -p to use the <prefix> as a postfix.
+
 ## v1.4.2 (Feb 19 2016)
 * Bugfix for prefix VFS: Removed an unneccessary $-sign which broke the code. (Thanks to 'clawes' for reporting.)
 

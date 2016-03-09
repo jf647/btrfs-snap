@@ -15,7 +15,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.4.2"
+VERSION="1.5.0"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -42,6 +42,9 @@ if '-r' is given, snapshots are created read only
 
 if '-c' is given, snapshots are created with more compatible names
 (i.e. no colons in file names, so that SAMBA does not mangle the names)
+
+if '-p' is given, the <prefix> will be used as a postfix, i.e. it is
+appended which might be usefull for automatic chronological sorting.
 
 if '-d dir' is given, snapshots are created in dir, relative to
 mountpoint (default: '.snapshot', conflicts with -b and -B).
@@ -92,10 +95,11 @@ base=""
 dir=""
 full_base=""
 readonly=""
+use_as_prefix=true
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 time_duration=0
-while getopts "hVrb:d:B:ct:" arg; do
+while getopts "hVrpb:d:B:ct:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
@@ -104,6 +108,9 @@ while getopts "hVrb:d:B:ct:" arg; do
 		r )
 			readonly="-r"
 			;;
+        p ) 
+            use_as_prefix=false
+            ;;
 		t )
 			time_duration=$((0+$OPTARG))
 			;;
@@ -145,7 +152,7 @@ fi
 
 # Remove trailing slash
 mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
-pf=$2
+prefix=$2
 cnt=$(( $3+1 ))
 
 function log.info() {
@@ -191,12 +198,17 @@ if [ ! -d $base ]; then
 fi
 base=$(readlink -f $base)
 
-if [ ${pf} == VFS ]; then
+if [ ${prefix} == VFS ]; then
     snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
 	snappattern="@GMT-????.??.??-??.??.??"
 else
-	snapname=${pf}_$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
-	snappattern="${pf}_????-??-??_??${time_delim}??${time_delim}??"
+    if $use_as_prefix; then
+	    snapname=${prefix}_$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
+    	snappattern="${prefix}_????-??-??_??${time_delim}??${time_delim}??"
+    else
+        snapname=$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)_${prefix}
+    	snappattern="????-??-??_??${time_delim}??${time_delim}??_${prefix}"
+    fi
 fi
 if [ -e ${base}/${snapname} ]; then
 	log.error "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
