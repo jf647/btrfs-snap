@@ -99,7 +99,7 @@ use_as_prefix=true
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 time_duration=0
-while getopts "hVrb:d:B:ct:" arg; do
+while getopts "hVrpb:d:B:ct:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
