@@ -22,10 +22,11 @@ btrfs-snap [-r] [-b basedir] mountpoint prefix count
 * -r makes the snapshot readonly (requires btrfs-tools v0.20)
 * -c generates more compatible snapshot names
      (ie. no colons that confuse SAMBA/Window$ clients)
+* -p redefines the prefix to be used as postfix
 * -d dir places the snapshot in dir, relative to the mountpoint
 * -b basedir places the snapshot in basedir with a directory structure that mimics the mountpoint
 * -B basedir places the snapshots in basedir with NO additional subdirectory structure
-* -t time creates only a snapshot if the newest already existing snapshot is older than 'time' seconds.
+* -t/-T time creates only a snapshot if the newest already existing snapshot is older than 'time' seconds.
 
 Without -b, -B, or -d, snapshots are placed in a directory called .snapshot at the top of the mountpoint.
 
@@ -88,6 +89,6 @@ Support for snapshotting unmounted btrfs subvolumes by Brian Kloppenborg (https:
 
 Switches -c (for windows-combitible timestamps) and -d (for specifying the snapshot directory) by Lukas Pirl (btrfs-snap@lukas-pirl.de)
 
-Switches -B (absolute path of snapshot directory) and -t (time-dependent snapshot) by Michael Walz (btrfs-snap@serpedon.de)
+Switches -B (absolute path of snapshot directory) and -t/-T (time-dependent snapshot) by Michael Walz (btrfs-snap@serpedon.de)
 
 
