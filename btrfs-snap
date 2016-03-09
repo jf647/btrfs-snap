@@ -15,7 +15,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.5.0"
+VERSION="1.6.0"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -57,10 +57,16 @@ subdirectory structure; choose <prefix> wisely to avoid conflicts
 (conflicts with -d and -b).
 
 if '-t time' is given, a snapshot will only be created if the newest already
-existing snapshot is older than 'time' seconds. Additonally, no snapshot will
+existing snapshot is older than 'time' seconds. Additionally, no snapshot will
 be made if <mountpoint> has identical timestamp as the newest snapshot.
 (The modification timestamps of the subvolumes/folders are used for comparison
  which MIGHT NOT work in some scenarios.)
+(conflicts with -T)
+
+if '-T time' is given, a snapshot will only be created if the newest already
+existing snapshot is older than 'time' seconds. Additonally, no snapshot will
+be made if <mountpoint> has a lower or equal transition-id than newest snapshot.
+(conflicts with -t)
 
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
@@ -96,10 +102,11 @@ dir=""
 full_base=""
 readonly=""
 use_as_prefix=true
+use_transid=false
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 time_duration=0
-while getopts "hVrpb:d:B:ct:" arg; do
+while getopts "hVrpb:d:B:ctT:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
@@ -113,6 +120,10 @@ while getopts "hVrpb:d:B:ct:" arg; do
             ;;
 		t )
 			time_duration=$((0+$OPTARG))
+			;;
+		T )
+			time_duration=$((0+$OPTARG))
+            use_transid=true
 			;;
 		b )
 			base=$OPTARG
@@ -218,18 +229,28 @@ fi
 if [ $time_duration -gt 0 ]; then
 	newestSnapshot=`ls -dr $base/${snappattern} 2>/dev/null| head -n 1`
 	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
-		mp_time=`stat -c "%Y" "${mp}"`
 		snap_time=`stat -c "%Y" "${newestSnapshot}"`
 		cur_time=`date +%s`
-		if [ $snap_time == $mp_time ]; then
-			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
-			exit 0;
-		fi
-
 		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
 			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
 			exit 0;
 		fi
+
+        if $use_transid; then
+            # get transaction ids
+            id_snap=$(btrfs subvolume find-new "$newestSnapshot" 99999999| sed 's/[^0-9]//g')
+            id_mount=$(btrfs subvolume find-new "${mp}" 99999999| sed 's/[^0-9]//g')
+            if [ $id_mount -le $id_snap ]; then
+	    		log.info "No snapshot created since transaction id of newest snapshot $newestSnapshot is newer or equal to $mp."
+		    	exit 0;
+            fi
+        else
+		    mp_time=`stat -c "%Y" "${mp}"`
+       		if [ $snap_time == $mp_time ]; then
+	    		log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
+		    	exit 0;
+    		fi
+        fi
 	fi
 	# Force update of source timestamp to prevent outdated timestamps on the folders
 	touch "${mp}"
