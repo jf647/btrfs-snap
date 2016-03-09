@@ -1,5 +1,8 @@
 # btrfs-snap Changelog
 
+## v1.6.0 (Mar 09 2016)
+* Added new flag -T which uses the transaction ids of btrfs to decide if new data is present.
+
 ## v1.5.0 (Mar 09 2016)
 * Added new flag -p to use the <prefix> as a postfix.
 
