@@ -107,58 +107,58 @@ time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 time_duration=0
 while getopts "hVrpb:d:B:ct:T:" arg; do
-	case "${arg}" in
-		h )
-			echo "$SYNOPSIS"
-			exit 0
-			;;
-		r )
-			readonly="-r"
-			;;
+    case "${arg}" in
+        h )
+            echo "$SYNOPSIS"
+            exit 0
+            ;;
+        r )
+            readonly="-r"
+            ;;
         p ) 
             use_as_prefix=false
             ;;
-		t )
-			time_duration=$((0+$OPTARG))
-			;;
-		T )
-			time_duration=$((0+$OPTARG))
+        t )
+            time_duration=$((0+$OPTARG))
+            ;;
+        T )
+            time_duration=$((0+$OPTARG))
             use_transid=true
-			;;
-		b )
-			base=$OPTARG
-			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
-			ONE_OF_b_B_d_GIVEN=true
-			;;
-		B )
-			full_base=$OPTARG
-			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
-			ONE_OF_b_B_d_GIVEN=true
-			;;
-		d )
-			dir=$OPTARG
-			if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
-			ONE_OF_b_B_d_GIVEN=true
-			;;
-		V )
-			echo "${prog} Version ${VERSION}"
-			exit 0
-			;;
-		c )
-			time_delim="-"
-			;;
-		* )
-			echo "$USAGE"
-			exit 1
-			;;
-	esac
+            ;;
+        b )
+            base=$OPTARG
+            if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+            ONE_OF_b_B_d_GIVEN=true
+            ;;
+        B )
+            full_base=$OPTARG
+            if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+            ONE_OF_b_B_d_GIVEN=true
+            ;;
+        d )
+            dir=$OPTARG
+            if $ONE_OF_b_B_d_GIVEN; then echo "Error: the switches -b -B -d are mutually exclusive."; exit 1; fi
+            ONE_OF_b_B_d_GIVEN=true
+            ;;
+        V )
+            echo "${prog} Version ${VERSION}"
+            exit 0
+            ;;
+        c )
+            time_delim="-"
+            ;;
+        * )
+            echo "$USAGE"
+            exit 1
+            ;;
+    esac
 done
 
 shift $((OPTIND-1))
 
 if [ $# -ne 3 ] ; then
-	echo "$USAGE"
-	exit 1
+    echo "$USAGE"
+    exit 1
 fi
 
 # Remove trailing slash
@@ -167,31 +167,31 @@ prefix=$2
 cnt=$(( $3+1 ))
 
 function log.info() {
-	logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
-	echo "$1"
+    logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
+    echo "$1"
 }
 
 function log.error() {
-	logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
-	echo "ERROR: $1"
-	exit 1;
+    logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
+    echo "ERROR: $1"
+    exit 1;
 }
 
 # Verify that the path is either a valid btrfs mountpoint
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
-	# or a valid snapshot matching mp
-	btrfs subvolume show $mp | grep "${mp}$" > /dev/null
-	if [ $? -ne 0 ] ; then
-		log.error "${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
-		exit 1;
-	fi
+    # or a valid snapshot matching mp
+    btrfs subvolume show $mp | grep "${mp}$" > /dev/null
+    if [ $? -ne 0 ] ; then
+        log.error "${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
+        exit 1;
+    fi
 fi
 
 # set default for dir
 if [ "x$dir" == "x" ]
 then
-	dir=".snapshot"
+    dir=".snapshot"
 fi
 
 if [ "x$base" == "x" ]
@@ -201,75 +201,75 @@ else
     base="${base}/${mp}"
 fi
 if [ "x$full_base" != "x" ]; then
-	base=$full_base
+    base=$full_base
 fi
 if [ ! -d $base ]; then
-	log.info "Creating $base"
-	mkdir -p $base
+    log.info "Creating $base"
+    mkdir -p $base
 fi
 base=$(readlink -f $base)
 
 if [ ${prefix} == VFS ]; then
     snapname=$(TZ=GMT date +@GMT-%Y.%m.%d-%H.%M.%S)
-	snappattern="@GMT-????.??.??-??.??.??"
+    snappattern="@GMT-????.??.??-??.??.??"
 else
     if $use_as_prefix; then
-	    snapname=${prefix}_$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
-    	snappattern="${prefix}_????-??-??_??${time_delim}??${time_delim}??"
+        snapname=${prefix}_$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)
+        snappattern="${prefix}_????-??-??_??${time_delim}??${time_delim}??"
     else
         snapname=$(date +%Y-%m-%d_%H${time_delim}%M${time_delim}%S)_${prefix}
-    	snappattern="????-??-??_??${time_delim}??${time_delim}??_${prefix}"
+        snappattern="????-??-??_??${time_delim}??${time_delim}??_${prefix}"
     fi
 fi
 if [ -e ${base}/${snapname} ]; then
-	log.error "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
-	exit 1;
+    log.error "cannot create snapshot in ${base}/${snapname} since a folder/file with that name already exists"
+    exit 1;
 fi
 
 if [ $time_duration -gt 0 ]; then
-	newestSnapshot=`ls -dr $base/${snappattern} 2>/dev/null| head -n 1`
-	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
-		snap_time=`stat -c "%Y" "${newestSnapshot}"`
-		cur_time=`date +%s`
+    newestSnapshot=`ls -dr $base/${snappattern} 2>/dev/null| head -n 1`
+    if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
+        snap_time=`stat -c "%Y" "${newestSnapshot}"`
+        cur_time=`date +%s`
         if $use_transid; then
             # get transaction ids
             id_snap=$(btrfs subvolume find-new "$newestSnapshot" 99999999| sed 's/[^0-9]//g')
             id_mount=$(btrfs subvolume find-new "${mp}" 99999999| sed 's/[^0-9]//g')
             if [ $id_mount -le $id_snap ]; then
-	    		log.info "No snapshot created since no changes since last snapshot. (Transaction id of $newestSnapshot is newer or equal to $mp.)"
-		    	exit 0;
+                log.info "No snapshot created since no changes since last snapshot. (Transaction id of $newestSnapshot is newer or equal to $mp.)"
+                exit 0;
             fi
         else
-		    mp_time=`stat -c "%Y" "${mp}"`
-       		if [ $snap_time == $mp_time ]; then
-	    		log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
-		    	exit 0;
-    		fi
+            mp_time=`stat -c "%Y" "${mp}"`
+               if [ $snap_time == $mp_time ]; then
+                log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
+                exit 0;
+            fi
         fi
 
-		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
-			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
-			exit 0;
-		fi
-	fi
-	# Force update of source timestamp to prevent outdated timestamps on the folders
-	touch "${mp}"
+        if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
+            log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
+            exit 0;
+        fi
+    fi
+    # Force update of source timestamp to prevent outdated timestamps on the folders
+    touch "${mp}"
 fi
 
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
 if [ $? -eq 0 ] ; then
-	log.info "${out}"
+    log.info "${out}"
 else
-	log.error "${out}"
-	exit 1;
+    log.error "${out}"
+    exit 1;
 fi
 
 ls -dr $base/${snappattern} | tail -n +${cnt} | while read snap ; do
-	out=`btrfs subvolume delete ${snap} 2>&1`
-	if [ $? -eq 0 ] ; then
-		log.info "${out}"
-	else
-		log.error "${out}"
-	fi
+    out=`btrfs subvolume delete ${snap} 2>&1`
+    if [ $? -eq 0 ] ; then
+        log.info "${out}"
+    else
+        log.error "${out}"
+    fi
 done
 
