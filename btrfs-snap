@@ -106,7 +106,7 @@ use_transid=false
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 time_duration=0
-while getopts "hVrpb:d:B:ctT:" arg; do
+while getopts "hVrpb:d:B:ct:T:" arg; do
 	case "${arg}" in
 		h )
 			echo "$SYNOPSIS"
@@ -231,17 +231,12 @@ if [ $time_duration -gt 0 ]; then
 	if [ ! -z "$newestSnapshot" -a -e "$newestSnapshot" ]; then
 		snap_time=`stat -c "%Y" "${newestSnapshot}"`
 		cur_time=`date +%s`
-		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
-			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
-			exit 0;
-		fi
-
         if $use_transid; then
             # get transaction ids
             id_snap=$(btrfs subvolume find-new "$newestSnapshot" 99999999| sed 's/[^0-9]//g')
             id_mount=$(btrfs subvolume find-new "${mp}" 99999999| sed 's/[^0-9]//g')
             if [ $id_mount -le $id_snap ]; then
-	    		log.info "No snapshot created since transaction id of newest snapshot $newestSnapshot is newer or equal to $mp."
+	    		log.info "No snapshot created since no changes since last snapshot. (Transaction id of $newestSnapshot is newer or equal to $mp.)"
 		    	exit 0;
             fi
         else
@@ -251,6 +246,11 @@ if [ $time_duration -gt 0 ]; then
 		    	exit 0;
     		fi
         fi
+
+		if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
+			log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
+			exit 0;
+		fi
 	fi
 	# Force update of source timestamp to prevent outdated timestamps on the folders
 	touch "${mp}"
