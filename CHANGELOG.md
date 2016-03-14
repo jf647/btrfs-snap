@@ -1,4 +1,6 @@
 # btrfs-snap Changelog
+## v1.7.0 (Mar 14 2016)
+* Added new switch -E which treats omitting a snapshot as an error.
 
 ## v1.6.1 (Mar 14 2016)
 * Bugfix: touch to update the timestamp is only needed for option '-t'.

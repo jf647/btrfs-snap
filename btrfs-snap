@@ -15,7 +15,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.6.0"
+VERSION="1.7.0"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -45,6 +45,9 @@ if '-c' is given, snapshots are created with more compatible names
 
 if '-p' is given, the <prefix> will be used as a postfix, i.e. it is
 appended which might be usefull for automatic chronological sorting.
+
+if '-E' is given, omitting a snapshot (e.g. due to options -t/-T) is
+treated as an error and a non-zero exit code is returned.
 
 if '-d dir' is given, snapshots are created in dir, relative to
 mountpoint (default: '.snapshot', conflicts with -b and -B).
@@ -105,8 +108,9 @@ use_as_prefix=true
 use_transid=false
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
+OMITT_ERROR_CODE=0
 time_duration=0
-while getopts "hVrpb:d:B:ct:T:" arg; do
+while getopts "hVrpEb:d:B:ct:T:" arg; do
     case "${arg}" in
         h )
             echo "$SYNOPSIS"
@@ -117,6 +121,9 @@ while getopts "hVrpb:d:B:ct:T:" arg; do
             ;;
         p ) 
             use_as_prefix=false
+            ;;
+        E )
+            OMITT_ERROR_CODE=1
             ;;
         t )
             time_duration=$((0+$OPTARG))
@@ -237,13 +244,13 @@ if [ $time_duration -gt 0 ]; then
             id_mount=$(btrfs subvolume find-new "${mp}" 99999999| sed 's/[^0-9]//g')
             if [ $id_mount -le $id_snap ]; then
                 log.info "No snapshot created since no changes since last snapshot. (Transaction id of $newestSnapshot is newer or equal to $mp.)"
-                exit 0;
+                exit $OMITT_ERROR_CODE
             fi
         else
             mp_time=`stat -c "%Y" "${mp}"`
             if [ $snap_time == $mp_time ]; then
                 log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
-                exit 0;
+                exit $OMITT_ERROR_CODE
             fi
             # Force update of source timestamp to prevent outdated timestamps on the folders
             touch "${mp}"
@@ -251,7 +258,7 @@ if [ $time_duration -gt 0 ]; then
 
         if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
             log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
-            exit 0;
+            exit $OMITT_ERROR_CODE
         fi
     fi
 fi
