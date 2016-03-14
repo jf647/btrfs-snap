@@ -241,10 +241,12 @@ if [ $time_duration -gt 0 ]; then
             fi
         else
             mp_time=`stat -c "%Y" "${mp}"`
-               if [ $snap_time == $mp_time ]; then
+            if [ $snap_time == $mp_time ]; then
                 log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
                 exit 0;
             fi
+            # Force update of source timestamp to prevent outdated timestamps on the folders
+            touch "${mp}"
         fi
 
         if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
@@ -252,8 +254,6 @@ if [ $time_duration -gt 0 ]; then
             exit 0;
         fi
     fi
-    # Force update of source timestamp to prevent outdated timestamps on the folders
-    touch "${mp}"
 fi
 
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`

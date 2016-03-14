@@ -1,5 +1,9 @@
 # btrfs-snap Changelog
 
+## v1.6.1 (Mar 14 2016)
+* Bugfix: touch to update the timestamp is only needed for option '-t'.
+  For '-T' it is counter-productive and therefore disabled.
+
 ## v1.6.0 (Mar 09 2016)
 * Added new flag -T which uses the transaction ids of btrfs to decide if new data is present.
 
