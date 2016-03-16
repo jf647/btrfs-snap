@@ -1,4 +1,8 @@
 # btrfs-snap Changelog
+
+## v1.7.1 (Mar 16 2016)
+* Fixed timestamp-bug (introduced in v1.6.1)
+
 ## v1.7.0 (Mar 14 2016)
 * Added new switch -E which treats omitting a snapshot as an error.
 

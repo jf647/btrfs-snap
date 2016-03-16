@@ -15,7 +15,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.7.0"
+VERSION="1.7.1"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -252,15 +252,16 @@ if [ $time_duration -gt 0 ]; then
                 log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot equal $mp."
                 exit $OMITT_ERROR_CODE
             fi
-            # Force update of source timestamp to prevent outdated timestamps on the folders
-            touch "${mp}"
         fi
 
         if [ $(($snap_time + $time_duration)) -gt $cur_time ]; then
             log.info "No snapshot created since timestamp of newest snapshot $newestSnapshot is less than $time_duration seconds away."
             exit $OMITT_ERROR_CODE
         fi
-    fi
+     fi
+
+     # Force update of source timestamp to prevent outdated timestamps on the folders
+     touch "${mp}"
 fi
 
 out=`btrfs subvol snapshot ${readonly} ${mp} ${base}/${snapname} 2>&1`
