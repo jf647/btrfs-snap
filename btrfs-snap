@@ -71,6 +71,8 @@ existing snapshot is older than 'time' seconds. Additonally, no snapshot will
 be made if <mountpoint> has a lower or equal transition-id than newest snapshot.
 (conflicts with -t)
 
+if '-q' is given, output becomes cron-compatible: silent unless an errors occurs.
+
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
 
@@ -104,13 +106,14 @@ base=""
 dir=""
 full_base=""
 readonly=""
+quiet=""
 use_as_prefix=true
 use_transid=false
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 OMITT_ERROR_CODE=0
 time_duration=0
-while getopts "hVrpEb:d:B:ct:T:" arg; do
+while getopts "hVrqpEb:d:B:ct:T:" arg; do
     case "${arg}" in
         h )
             echo "$SYNOPSIS"
@@ -118,6 +121,9 @@ while getopts "hVrpEb:d:B:ct:T:" arg; do
             ;;
         r )
             readonly="-r"
+            ;;
+        q )
+            quiet="1"
             ;;
         p ) 
             use_as_prefix=false
@@ -175,7 +181,7 @@ cnt=$(( $3+1 ))
 
 function log.info() {
     logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
-    echo "$1"
+    test -n "$quiet" && echo "$1"
 }
 
 function log.error() {
