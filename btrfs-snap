@@ -186,7 +186,7 @@ function log.info() {
 
 function log.error() {
     logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
-    echo "ERROR: $1"
+    echo "ERROR: $1" >&2
     exit 1;
 }
 
