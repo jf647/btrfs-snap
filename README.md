@@ -58,6 +58,7 @@ Tested on
 * Ubuntu 12.04 with the raring kernel
 * Ubuntu 13.04
 * Debian 8
+* Debian 9
 
 Anything else, YMMV.  Reports of successful use on other operating systems
 is welcome
