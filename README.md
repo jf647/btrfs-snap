@@ -28,6 +28,7 @@ btrfs-snap [-r] [-b basedir] mountpoint prefix count
 * -b basedir places the snapshot in basedir with a directory structure that mimics the mountpoint
 * -B basedir places the snapshots in basedir with NO additional subdirectory structure
 * -t/-T time creates only a snapshot if the newest already existing snapshot is older than 'time' seconds.
+* -q output becomes cron-compatible: silent unless an error occurs.
 
 Without -b, -B, or -d, snapshots are placed in a directory called .snapshot at the top of the mountpoint.
 
