@@ -6,7 +6,8 @@
 # Copyright (C) 2013 James FitzGibbon james@nadt.net
 # Copyright (C) 2014 Brian Kloppenberg
 # Copyright (C) 2015 Lukas Pirl btrfs-snap@lukas-pirl.de
-# Copyright (C) 2015/2016 Michael Walz btrfs-snap@serpedon.de
+# Copyright (C) 2015-2017 Michael Walz btrfs-snap@serpedon.de
+# Copyright (C) 2017 Raimund Jacob-Bloedorn jacob@pinuts.de
 
 # This program is distributed under the GNU General Public License
 # http://www.gnu.org/licenses/gpl.txt
@@ -15,7 +16,7 @@
 set -u
 
 LOG_FACILITY=local0
-VERSION="1.7.1"
+VERSION="1.7.2"
 prog=${0##*/}
 PATH="$PATH:/usr/sbin:/usr/bin:/sbin:/bin"
 
@@ -71,6 +72,8 @@ existing snapshot is older than 'time' seconds. Additonally, no snapshot will
 be made if <mountpoint> has a lower or equal transition-id than newest snapshot.
 (conflicts with -t)
 
+if '-q' is given, output becomes cron-compatible: silent unless an error occurs.
+
 Example usage for a system with 2 btrfs file systems mounted as
 / and /home (remember to make these scripts executable):
 
@@ -104,13 +107,14 @@ base=""
 dir=""
 full_base=""
 readonly=""
+quiet=""
 use_as_prefix=true
 use_transid=false
 time_delim=":"
 ONE_OF_b_B_d_GIVEN=false
 OMITT_ERROR_CODE=0
 time_duration=0
-while getopts "hVrpEb:d:B:ct:T:" arg; do
+while getopts "hVrqpEb:d:B:ct:T:" arg; do
     case "${arg}" in
         h )
             echo "$SYNOPSIS"
@@ -118,6 +122,9 @@ while getopts "hVrpEb:d:B:ct:T:" arg; do
             ;;
         r )
             readonly="-r"
+            ;;
+        q )
+            quiet="1"
             ;;
         p ) 
             use_as_prefix=false
@@ -169,18 +176,18 @@ if [ $# -ne 3 ] ; then
 fi
 
 # Remove trailing slash
-mp=$(echo $1 | perl -pe 's#[^/]/$#$1#')
+mp=$(echo $1 | perl -pe 's#([^/])/$#$1#')
 prefix=$2
 cnt=$(( $3+1 ))
 
 function log.info() {
     logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
-    echo "$1"
+    test -z "$quiet" && echo "$1"
 }
 
 function log.error() {
     logger -p ${LOG_FACILITY}.err -t ${prog} "$1"
-    echo "ERROR: $1"
+    echo "ERROR: $1" >&2
     exit 1;
 }
 

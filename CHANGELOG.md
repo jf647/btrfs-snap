@@ -1,4 +1,7 @@
 # btrfs-snap Changelog
+## v1.7.2 (Feb 11 2017)
+* Added new switch -q which makes output cron-compatible: silent unless an error occurs.
+* Regex fix: correctly remove trailing slashes on mount-points
 
 ## v1.7.1 (Mar 16 2016)
 * Fixed timestamp-bug (introduced in v1.6.1)
