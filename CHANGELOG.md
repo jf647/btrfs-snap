@@ -1,4 +1,7 @@
 # btrfs-snap Changelog
+
+* Added new switch -q which makes output cron-compatible: silent unless an error occurs.
+
 ## v1.7.0 (Mar 14 2016)
 * Added new switch -E which treats omitting a snapshot as an error.
 
