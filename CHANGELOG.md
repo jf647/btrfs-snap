@@ -1,4 +1,7 @@
 # btrfs-snap Changelog
+## v1.7.3 (Jul 25 2017)
+* Removed perl dependency (replaced perl regex by bash regex)
+
 ## v1.7.2 (Feb 11 2017)
 * Added new switch -q which makes output cron-compatible: silent unless an error occurs.
 * Regex fix: correctly remove trailing slashes on mount-points
