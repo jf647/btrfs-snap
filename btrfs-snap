@@ -195,7 +195,7 @@ function log.error() {
 mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
 if [ $? -ne 0 ] ; then
     # or a valid snapshot matching mp
-    btrfs subvolume show $mp | grep "${mp}$" > /dev/null
+    btrfs subvolume show $mp > /dev/null
     if [ $? -ne 0 ] ; then
         log.error "${mp} is not a btrfs mountpoint (or old version of btrfs-tools, try > 0.19)"
         exit 1;
