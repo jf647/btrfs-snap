@@ -182,7 +182,10 @@ cnt=$(( $3+1 ))
 
 function log.info() {
     logger -p ${LOG_FACILITY}.info -t ${prog} "$1"
-    test -z "$quiet" && echo "$1"
+    if test -z "$quiet"
+    then
+        echo "$1"
+    fi
 }
 
 function log.error() {
