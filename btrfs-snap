@@ -126,7 +126,7 @@ while getopts "hVrqpEb:d:B:ct:T:" arg; do
         q )
             quiet="1"
             ;;
-        p ) 
+        p )
             use_as_prefix=false
             ;;
         E )
@@ -287,4 +287,3 @@ ls -dr $base/${snappattern} | tail -n +${cnt} | while read snap ; do
         log.error "${out}"
     fi
 done
-
