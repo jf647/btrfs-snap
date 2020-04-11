@@ -192,8 +192,7 @@ function log.error() {
 }
 
 # Verify that the path is either a valid btrfs mountpoint
-mount -t btrfs | cut -d " " -f 3 | grep "^${mp}$" > /dev/null
-if [ $? -ne 0 ] ; then
+if ! findmnt -t btrfs -T "${mp}" &> /dev/null; then
     # or a valid snapshot matching mp
     btrfs subvolume show $mp | grep "${mp}$" > /dev/null
     if [ $? -ne 0 ] ; then
